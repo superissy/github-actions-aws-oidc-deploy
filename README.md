@@ -1,3 +1,5 @@
+[![Deploy AWS S3 Bucket with OIDC authentication](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml/badge.svg)](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml)
+
 # OIDC GitHub Action for Creating a Test S3 Bucket 
 This README provides detailed instructions on using the OIDC (OpenID Connect) GitHub Action to create and manage a test Amazon Elastic S3 bucket.
 
