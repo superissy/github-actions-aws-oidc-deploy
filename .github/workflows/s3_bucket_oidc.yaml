@@ -1,0 +1,89 @@
+name: Deploy AWS S3 Bucket with OIDC authentication
+
+on:
+  push
+
+env:
+  AWS_REGION : "us-east-1"
+  AWS_ROLE_TO_ASSUME: "arn:aws:iam::438270576332:role/oidc_github_action_role"
+  REPOSITORY_NAME: "${{ github.actor }}"
+  BUCKET_NAME: "${{ github.actor }}-oidc-test-bucket" # Combine GitHub username with bucket identifier for unique naming
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+
+# Define the jobs to run
+jobs:
+  deploy:
+    # Use latest Ubuntu runner
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Replace with your actual IAM role ARN
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-session-name: s3-deploy-action-session
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 3: Check if the S3 bucket already exists
+      - name: Check if bucket exists
+        id: check_bucket
+        run: |
+          # Use head-bucket command to check bucket existence
+          # Redirect stderr to /dev/null to suppress error messages
+          if aws s3api head-bucket --bucket ${{ env.BUCKET_NAME }} 2>/dev/null; then
+            echo "Bucket ${{ env.BUCKET_NAME }} already exists"
+            echo "bucket_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Bucket ${{ env.BUCKET_NAME }} does not exist"
+            echo "bucket_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 4: Create S3 bucket if it doesn't exist
+      - name: Create S3 bucket
+        # Only run if bucket doesn't exist (checked in previous step)
+        if: steps.check_bucket.outputs.bucket_exists == 'false'
+        run: |
+          # Create bucket with region-specific configuration
+          aws s3api create-bucket \
+            --bucket ${{ env.BUCKET_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            # Special handling for regions other than us-east-1
+            $(if [ "${{ env.AWS_REGION }}" != "us-east-1" ]; then echo "--create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }}"; fi)
+          
+          echo "Configuring bucket settings..."
+          
+          # Enable versioning for better object management and recovery
+          aws s3api put-bucket-versioning \
+            --bucket ${{ env.BUCKET_NAME }} \
+            --versioning-configuration Status=Enabled
+
+          # Configure default encryption for security
+          aws s3api put-bucket-encryption \
+            --bucket ${{ env.BUCKET_NAME }} \
+            --server-side-encryption-configuration '{
+              "Rules": [
+                {
+                  "ApplyServerSideEncryptionByDefault": {
+                    "SSEAlgorithm": "AES256"
+                  }
+                }
+              ]
+            }'
+
+      # Step 5: Configure bucket access settings
+      - name: Configure bucket public access
+        # Only run if bucket was just created
+        if: steps.check_bucket.outputs.bucket_exists == 'false'
+        run: |
+          # Block all public access for security
+          aws s3api put-public-access-block \
+            --bucket ${{ env.BUCKET_NAME }} \
+            --public-access-block-configuration \
+              "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
