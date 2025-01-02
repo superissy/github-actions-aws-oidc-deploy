@@ -5,7 +5,7 @@ on:
 
 env:
   AWS_REGION : "us-east-1"
-  AWS_ROLE_TO_ASSUME: "arn:aws:iam::129224467924:role/github-actions-aws-oidc-deploy-role"
+  AWS_ROLE_TO_ASSUME: "arn:aws:iam::129224467924:role/github-actions-s3-oidc-role"
   REPOSITORY_NAME: "${{ github.actor }}"
   BUCKET_NAME: "${{ github.actor }}-oidc-test-bucket" # Combine GitHub username with bucket identifier for unique naming
 permissions:

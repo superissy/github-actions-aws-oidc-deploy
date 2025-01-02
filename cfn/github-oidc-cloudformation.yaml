@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to create GitHub Actions OIDC provider and IAM role with S3 permissions'
+
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: github-actions-s3-oidc-role
+    Description: Name of the IAM role to be created
+
+# GitHub repository name in format owner/repo
+  RepoName:
+    Type: String
+    Default: superissy/github-actions-aws-oidc-deploy
+    Description: GitHub repository name in format owner/repo
+
+# Environment parameter to tag resources
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: 
+      - dev
+      - staging
+      - prod
+    Description: Environment name for resource tagging
+
+# Resources to create GitHub OIDC provider and IAM role
+Resources:
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: 
+        - sts.amazonaws.com
+      ThumbprintList:
+        - '6938fd4d98bab03faadb97b34396831e3780aea1'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: GitHubActions to AWS 
+
+# IAM role with S3 permissions for GitHub Actions
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${RoleName}-${Environment}'
+      Description: !Sub 'IAM role for GitHub Actions OIDC integration - ${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GitHubOIDCProvider.Arn
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringLike:
+                'token.actions.githubusercontent.com:sub': !Sub 'repo:${RepoName}:*'
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: GitHubActions
+
+Outputs:
+  RoleARN:
+    Description: 'ARN of the created IAM Role'
+    Value: !GetAtt GitHubActionsRole.Arn
+  OIDCProviderArn:
+    Description: 'ARN of the OIDC Provider'
+    Value: !GetAtt GitHubOIDCProvider.Arn
