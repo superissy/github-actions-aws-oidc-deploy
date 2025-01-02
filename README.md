@@ -1,3 +1,5 @@
+[![Deploy AWS S3 Bucket with OIDC authentication](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml/badge.svg)](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml)
+
 # Deploy AWS S3 Bucket with OIDC Authentication
 
 This repository contains a GitHub Actions workflow to automate the creation and configuration of an AWS S3 bucket using OpenID Connect (OIDC) authentication. The workflow ensures secure and efficient bucket deployment, including best practices for versioning and encryption.
