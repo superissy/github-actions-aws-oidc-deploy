@@ -1,4 +1,11 @@
 [![Deploy AWS S3 Bucket with OIDC authentication](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml/badge.svg)](https://github.com/superissy/github-actions-aws-oidc-deploy/actions/workflows/s3_bucket_oidc.yaml)
+![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
+![Static Badge](https://img.shields.io/badge/code-YAML-purple)
+![Static Badge](https://img.shields.io/badge/AWS-cloudformation-orange)
+
+
+
+
 
 # Deploy AWS S3 Bucket with OIDC Authentication
 

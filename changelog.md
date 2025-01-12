@@ -1,7 +1,10 @@
 ## Change Log
 
-### [1.0.0] - 2025-01-02
+### [1.0.1] - 2025-01-
+#### Added
+- Added bages to readme file
 
+### [1.0.0] - 2025-01-02
 #### Added
 - CloudFormation template to define:
   - OIDC provider.
